@@ -176,6 +176,14 @@ void View::btnContCreate(lv_obj_t *obj)
     lv_obj_add_event_cb(btn, buttonEventHandler, LV_EVENT_ALL, this);
     ui.btnCont.btn = btn;
 
+    lv_obj_t *catGif1 = lv_gif_create(btnCont);
+    lv_gif_set_src(catGif1, "S:./cat1.gif");
+    lv_obj_align_to(catGif1, btn, LV_ALIGN_OUT_LEFT_MID, -20, -10);
+
+    lv_obj_t *catGif2 = lv_gif_create(btnCont);
+    lv_gif_set_src(catGif2, "S:./cat2.gif");
+    lv_obj_align_to(catGif2, btn, LV_ALIGN_OUT_RIGHT_MID, 20, -5);
+
     /* Render octagon explode */
     lv_obj_t *roundRect_1 = roundRectCreate(btnCont, 0, -20);
     lv_obj_t *roundRect_2 = roundRectCreate(btnCont, 0, -20);
@@ -262,17 +270,6 @@ const uint8_t *View::addImageList(ImgInfo info, int tag)
 
     if (src != nullptr)
     {
-        lv_obj_t *cell = lv_img_create(ui.cont);
-        // lv_obj_set_grid_cell(cell, LV_GRID_ALIGN_STRETCH, 0, 1, LV_GRID_ALIGN_STRETCH, 0, 1);
-
-        // lv_obj_set_style_radius(cell, 10, LV_STATE_DEFAULT);
-        // lv_obj_align(cell, LV_ALIGN_TOP_LEFT, 0, tag);
-        // lv_obj_set_style_bg_color(cell, lv_color_black(), LV_STATE_DEFAULT);
-        // lv_obj_set_style_outline_width(cell, 2, LV_STATE_FOCUSED);
-        // lv_obj_set_style_outline_color(cell, lv_color_hex(0xffff00ff), LV_STATE_FOCUSED);
-        // lv_obj_set_style_outline_pad(cell, 6, LV_STATE_FOCUSED);
-        // lv_obj_add_flag(cell, LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_CLICKABLE);
-
         lv_obj_t *img = lv_img_create(ui.listCont.cont);
         lv_img_set_src(img, src);
 

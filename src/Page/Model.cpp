@@ -3,8 +3,9 @@
 
 #include "JpegImage.h"
 #include "PngImage.h"
+#include "BitImage.h"
 
-#define IMAGE_DIR "/mnt/UDISK/images/"
+#define IMAGE_DIR "/mnt/UDISK/pictures/"
 
 using namespace Page;
 
@@ -72,109 +73,22 @@ void *Model::threadProcHandler(void *arg)
     int w, h, bpp;
     unsigned char *image = nullptr;
 
-    // pthread_mutex_lock(model->_mutex);
-
-    std::string filePath = "/mnt/UDISK/pic2.jpg";
-    image = model->jpegImageDecode(filePath, w, h, bpp);
-    if (image != NULL)
+    for (int i = 0; i < 10; i++)
     {
-        unsigned char *zoomimge = model->bitImageZoom(w, h, image, 210, 158, bpp);
-        delete[] image;
+        pthread_mutex_lock(model->_mutex);
 
-        model->_view.addImageList((ImgInfo){210, 158, zoomimge, bpp}, 0);
+        std::string filePath = "/mnt/UDISK/pictures/" + std::to_string(i + 1) + ".jpg";
+        image = model->jpegImageDecode(filePath, w, h, bpp);
+        if (image != NULL)
+        {
+            unsigned char *zoomimge = model->bitImageZoom(w, h, image, 210, 158, bpp);
+            delete[] image;
+
+            model->_view.addImageList((ImgInfo){210, 158, zoomimge, bpp}, i);
+        }
+        pthread_mutex_unlock(model->_mutex);
+        usleep(30000);
     }
-
-    filePath = "/mnt/UDISK/pic2.jpg";
-    image = model->jpegImageDecode(filePath, w, h, bpp);
-    if (image != NULL)
-    {
-        unsigned char *zoomimge = model->bitImageZoom(w, h, image, 210, 158, bpp);
-        delete[] image;
-
-        model->_view.addImageList((ImgInfo){210, 158, zoomimge, bpp}, 1);
-    }
-
-    filePath = "/mnt/UDISK/pic2.jpg";
-    image = model->jpegImageDecode(filePath, w, h, bpp);
-    if (image != NULL)
-    {
-        unsigned char *zoomimge = model->bitImageZoom(w, h, image, 210, 158, bpp);
-        delete[] image;
-
-        model->_view.addImageList((ImgInfo){210, 158, zoomimge, bpp}, 2);
-    }
-
-    filePath = "/mnt/UDISK/pic2.jpg";
-    image = model->jpegImageDecode(filePath, w, h, bpp);
-    if (image != NULL)
-    {
-        unsigned char *zoomimge = model->bitImageZoom(w, h, image, 210, 158, bpp);
-        delete[] image;
-
-        model->_view.addImageList((ImgInfo){210, 158, zoomimge, bpp}, 3);
-    }
-
-    filePath = "/mnt/UDISK/pic2.jpg";
-    image = model->jpegImageDecode(filePath, w, h, bpp);
-    if (image != NULL)
-    {
-        unsigned char *zoomimge = model->bitImageZoom(w, h, image, 210, 158, bpp);
-        delete[] image;
-
-        model->_view.addImageList((ImgInfo){210, 158, zoomimge, bpp}, 4);
-    }
-
-    filePath = "/mnt/UDISK/pic2.jpg";
-    image = model->jpegImageDecode(filePath, w, h, bpp);
-    if (image != NULL)
-    {
-        unsigned char *zoomimge = model->bitImageZoom(w, h, image, 210, 158, bpp);
-        delete[] image;
-
-        model->_view.addImageList((ImgInfo){210, 158, zoomimge, bpp}, 5);
-    }
-
-    filePath = "/mnt/UDISK/pic2.jpg";
-    image = model->jpegImageDecode(filePath, w, h, bpp);
-    if (image != NULL)
-    {
-        unsigned char *zoomimge = model->bitImageZoom(w, h, image, 210, 158, bpp);
-        delete[] image;
-
-        model->_view.addImageList((ImgInfo){210, 158, zoomimge, bpp}, 6);
-    }
-
-    filePath = "/mnt/UDISK/pic2.jpg";
-    image = model->jpegImageDecode(filePath, w, h, bpp);
-    if (image != NULL)
-    {
-        unsigned char *zoomimge = model->bitImageZoom(w, h, image, 210, 158, bpp);
-        delete[] image;
-
-        model->_view.addImageList((ImgInfo){210, 158, zoomimge, bpp}, 7);
-    }
-
-    filePath = "/mnt/UDISK/pic2.jpg";
-    image = model->jpegImageDecode(filePath, w, h, bpp);
-    if (image != NULL)
-    {
-        unsigned char *zoomimge = model->bitImageZoom(w, h, image, 210, 158, bpp);
-        delete[] image;
-
-        model->_view.addImageList((ImgInfo){210, 158, zoomimge, bpp}, 8);
-    }
-
-    filePath = "/mnt/UDISK/pic2.jpg";
-    image = model->jpegImageDecode(filePath, w, h, bpp);
-    if (image != NULL)
-    {
-        unsigned char *zoomimge = model->bitImageZoom(w, h, image, 210, 158, bpp);
-        delete[] image;
-
-        model->_view.addImageList((ImgInfo){210, 158, zoomimge, bpp}, 9);
-    }
-
-    // pthread_mutex_unlock(model->_mutex);
 
     while (!model->_threadExitFlag)
     {
@@ -185,26 +99,26 @@ void *Model::threadProcHandler(void *arg)
 
 unsigned char *Model::bmpImageDecode(std::string &file, int &wight, int &height, int &bitPerPixel)
 {
-    // BitImage *bmp = new BitImage(file);
-    // int w = bmp->GetInfo().width;
-    // int h = bmp->GetInfo().height;
-    // int bpp = bmp->GetInfo().bpp;
+    BitImage *bmp = new BitImage(file);
+    int w = bmp->GetInfo().width;
+    int h = bmp->GetInfo().height;
+    int bpp = bmp->GetInfo().bpp;
 
-    // printf("[Model] bmp image width:%d\n", w);
-    // printf("[Model] bmp image height:%d\n", h);
-    // printf("[Model] bmp image bpp:%d\n", bpp);
+    printf("[Model] bmp image width:%d\n", w);
+    printf("[Model] bmp image height:%d\n", h);
+    printf("[Model] bmp image bpp:%d\n", bpp);
 
-    // unsigned char *buf = new unsigned char[w * h * bpp / 8];
+    unsigned char *buf = new unsigned char[w * h * bpp / 8];
 
-    // bmp->GetImage(buf, h);
+    bmp->GetImage(buf, h);
 
-    // wight = w;
-    // height = h;
-    // bitPerPixel = bpp;
+    wight = w;
+    height = h;
+    bitPerPixel = bpp;
 
-    // delete bmp;
+    delete bmp;
 
-    // return buf;
+    return buf;
 }
 
 unsigned char *Model::jpegImageDecode(std::string &file, int &wight, int &height, int &bitPerPixel)
