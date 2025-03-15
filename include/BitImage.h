@@ -33,7 +33,7 @@ public:
 
     typedef enum
     {
-        IMAGE_NOT_INIT = -1,
+        IMAGE_ERR = -1,
         IMAGE_OK = 0,
     } ImageStatus;
 

@@ -8,7 +8,7 @@
 BitImage::BitImage(std::string path)
 {
     file_name = path;
-    status = IMAGE_NOT_INIT;
+    status = IMAGE_ERR;
     inverted = true;
 
     do
@@ -63,7 +63,7 @@ BitImage::~BitImage()
 
 void BitImage::GetImage(unsigned char *buf, unsigned long line)
 {
-    if (buf == NULL || line <= 0 || status == IMAGE_NOT_INIT)
+    if (buf == NULL || line <= 0 || status == IMAGE_ERR)
         return;
 
     if (image_seek == 0)

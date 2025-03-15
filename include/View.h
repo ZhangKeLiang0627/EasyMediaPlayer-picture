@@ -51,6 +51,11 @@ namespace Page
                 lv_obj_t *btn;
             } btnCont;
 
+            struct
+            {
+                lv_obj_t *cont;
+            } listCont;
+
             lv_anim_timeline_t *anim_timeline;
             lv_anim_timeline_t *anim_timelineClick;
         } ui;
@@ -67,6 +72,7 @@ namespace Page
     private:
         void AttachEvent(lv_obj_t *obj);
 
+        void listCreate(lv_obj_t *obj);
         void contCreate(lv_obj_t *obj);
         void btnContCreate(lv_obj_t *obj);
 

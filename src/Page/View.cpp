@@ -10,6 +10,9 @@ void View::create(Operations &opts)
     // 总画布的创建
     contCreate(lv_scr_act());
 
+    // 图片列表画布的创建
+    listCreate(ui.cont);
+
     // 按钮画布的创建
     btnContCreate(ui.cont);
 
@@ -132,12 +135,36 @@ void View::contCreate(lv_obj_t *obj)
     ui.cont = cont;
 }
 
+// 图片列表画布的创建
+void View::listCreate(lv_obj_t *obj)
+{
+    lv_obj_t *cont = lv_obj_create(obj);
+    lv_obj_remove_style_all(cont);
+    lv_obj_set_size(cont, LV_HOR_RES - 30, lv_pct(80));
+    lv_obj_add_flag(cont, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_opa(cont, LV_OPA_TRANSP, 0);
+    lv_obj_set_style_radius(cont, 10, 0);
+    lv_obj_set_style_bg_color(cont, lv_color_hex(0x888888), 0);
+    lv_obj_align(cont, LV_ALIGN_CENTER, 0, -33);
+
+    // 设置网格布局
+    static lv_coord_t col_dsc[] = {210, 21, 210, LV_GRID_TEMPLATE_LAST};                            // 每列宽度为210，间隔为21
+    static lv_coord_t row_dsc[] = {158, 21, 158, 21, 158, 21, 158, 21, 158, LV_GRID_TEMPLATE_LAST}; // 每行高度为158，间隔为21
+    lv_obj_set_grid_dsc_array(cont, col_dsc, row_dsc);
+    lv_obj_set_layout(cont, LV_LAYOUT_GRID);
+
+    // 设置内边距
+    lv_obj_set_style_pad_all(cont, 4, 0); // 设置所有方向的内边距为4像素
+
+    ui.listCont.cont = cont;
+}
+
 // 按钮画布的创建
 void View::btnContCreate(lv_obj_t *obj)
 {
     lv_obj_t *btnCont = lv_obj_create(obj);
     lv_obj_remove_style_all(btnCont);
-    lv_obj_set_size(btnCont, lv_pct(70), LV_VER_RES / 4);
+    lv_obj_set_size(btnCont, lv_pct(95), LV_VER_RES / 4);
     lv_obj_clear_flag(btnCont, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_bg_opa(btnCont, LV_OPA_COVER, 0);
     lv_obj_set_style_bg_color(btnCont, lv_color_hex(0x6a8d6d), 0);
@@ -171,8 +198,8 @@ lv_obj_t *View::btnCreate(lv_obj_t *par, const void *img_src, lv_coord_t y_ofs)
     lv_obj_set_style_bg_img_src(obj, img_src, 0);
 
     lv_obj_set_style_bg_opa(obj, LV_OPA_COVER, 0);
-    lv_obj_set_style_width(obj, 75, LV_STATE_PRESSED);                         // 设置button按下时的宽
-    lv_obj_set_style_height(obj, 25, LV_STATE_PRESSED);                        // 设置button按下时的长
+    lv_obj_set_style_width(obj, 150, LV_STATE_PRESSED);                        // 设置button按下时的宽
+    lv_obj_set_style_height(obj, 40, LV_STATE_PRESSED);                        // 设置button按下时的长
     lv_obj_set_style_bg_color(obj, lv_color_hex(0x356b8c), 0);                 // 设置按钮默认的颜色
     lv_obj_set_style_bg_color(obj, lv_color_hex(0x242947), LV_STATE_PRESSED);  // 设置按钮在被按下时的颜色
     lv_obj_set_style_bg_color(obj, lv_color_hex(0xf2daaa), LV_STATE_FOCUSED);  // 设置按钮在被聚焦时的颜色
@@ -238,19 +265,36 @@ const uint8_t *View::addImageList(ImgInfo info, int tag)
         lv_obj_t *cell = lv_img_create(ui.cont);
         // lv_obj_set_grid_cell(cell, LV_GRID_ALIGN_STRETCH, 0, 1, LV_GRID_ALIGN_STRETCH, 0, 1);
 
-        lv_obj_align(cell, LV_ALIGN_TOP_LEFT, 0, tag);
-        lv_obj_set_style_bg_color(cell, lv_color_black(), LV_STATE_DEFAULT);
-        lv_obj_set_style_outline_width(cell, 2, LV_STATE_FOCUSED);
-        lv_obj_set_style_outline_color(cell, lv_color_hex(0xffff00ff), LV_STATE_FOCUSED);
-        lv_obj_set_style_outline_pad(cell, 6, LV_STATE_FOCUSED);
-        lv_obj_add_flag(cell, LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_CLICKABLE);
+        // lv_obj_set_style_radius(cell, 10, LV_STATE_DEFAULT);
+        // lv_obj_align(cell, LV_ALIGN_TOP_LEFT, 0, tag);
+        // lv_obj_set_style_bg_color(cell, lv_color_black(), LV_STATE_DEFAULT);
+        // lv_obj_set_style_outline_width(cell, 2, LV_STATE_FOCUSED);
+        // lv_obj_set_style_outline_color(cell, lv_color_hex(0xffff00ff), LV_STATE_FOCUSED);
+        // lv_obj_set_style_outline_pad(cell, 6, LV_STATE_FOCUSED);
+        // lv_obj_add_flag(cell, LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_CLICKABLE);
 
-        lv_obj_t *img = lv_img_create(cell);
+        lv_obj_t *img = lv_img_create(ui.listCont.cont);
         lv_img_set_src(img, src);
+
+        lv_obj_set_style_bg_color(img, lv_color_black(), LV_PART_MAIN);
+
+        lv_obj_set_style_radius(img, 12, LV_PART_MAIN);
+        lv_obj_set_style_clip_corner(img, true, LV_PART_MAIN);
+
+        lv_obj_set_style_img_opa(img, LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_img_opa(img, LV_OPA_80, LV_PART_MAIN | LV_STATE_PRESSED);
+
+        lv_obj_set_style_outline_width(img, 2, LV_STATE_DEFAULT);
+        lv_obj_set_style_outline_color(img, lv_color_hex(0x333333), LV_STATE_DEFAULT);
+        lv_obj_set_style_outline_pad(img, 1, LV_STATE_PRESSED);
+        lv_obj_set_style_outline_pad(img, 3, LV_STATE_DEFAULT);
+
         lv_obj_add_flag(img, LV_OBJ_FLAG_EVENT_BUBBLE |
                                  LV_OBJ_FLAG_CLICK_FOCUSABLE |
                                  LV_OBJ_FLAG_CLICKABLE); // 设置事件同时传播到父对象cell
-        lv_obj_center(img);
+
+        // 将图像对象添加到网格布局中
+        lv_obj_set_grid_cell(img, LV_GRID_ALIGN_STRETCH, (tag % 2) * 2, 1, LV_GRID_ALIGN_STRETCH, (tag / 2) * 2, 1);
 
         lv_obj_set_user_data(img, data);
         // lv_obj_add_event_cb(img, img_list_click_event_handler, LV_EVENT_SHORT_CLICKED, nullptr);
@@ -336,6 +380,7 @@ void View::buttonEventHandler(lv_event_t *event)
     if (code == LV_EVENT_SHORT_CLICKED)
     {
         instance->appearAnimClick();
+        instance->_opts.exitCb();
     }
 }
 
@@ -365,7 +410,7 @@ void View::onEvent(lv_event_t *event)
             break;
         case LV_DIR_BOTTOM:
             printf("[View] LV_DIR_BOTTOM!\n");
-            instance->_opts.exitCb();
+            // instance->_opts.exitCb();
             break;
 
         default:

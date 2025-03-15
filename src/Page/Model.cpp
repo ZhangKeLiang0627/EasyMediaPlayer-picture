@@ -67,27 +67,114 @@ void *Model::threadProcHandler(void *arg)
 {
     Model *model = static_cast<Model *>(arg); // 将arg转换为Model指针
 
+    usleep(5000);
+
     int w, h, bpp;
     unsigned char *image = nullptr;
-    std::string filePath = "/mnt/UDISK/pic1.jpg";
+
+    // pthread_mutex_lock(model->_mutex);
+
+    std::string filePath = "/mnt/UDISK/pic2.jpg";
     image = model->jpegImageDecode(filePath, w, h, bpp);
     if (image != NULL)
     {
-        unsigned char *zoomimge = model->bitImageZoom(w, h, image, 180, 135, bpp);
+        unsigned char *zoomimge = model->bitImageZoom(w, h, image, 210, 158, bpp);
         delete[] image;
 
-        model->_view.addImageList((ImgInfo){180, 135, zoomimge, bpp}, 0);
+        model->_view.addImageList((ImgInfo){210, 158, zoomimge, bpp}, 0);
     }
 
     filePath = "/mnt/UDISK/pic2.jpg";
     image = model->jpegImageDecode(filePath, w, h, bpp);
     if (image != NULL)
     {
-        unsigned char *zoomimge = model->bitImageZoom(w, h, image, 180, 135, bpp);
+        unsigned char *zoomimge = model->bitImageZoom(w, h, image, 210, 158, bpp);
         delete[] image;
 
-        model->_view.addImageList((ImgInfo){180, 135, zoomimge, bpp}, 200);
+        model->_view.addImageList((ImgInfo){210, 158, zoomimge, bpp}, 1);
     }
+
+    filePath = "/mnt/UDISK/pic2.jpg";
+    image = model->jpegImageDecode(filePath, w, h, bpp);
+    if (image != NULL)
+    {
+        unsigned char *zoomimge = model->bitImageZoom(w, h, image, 210, 158, bpp);
+        delete[] image;
+
+        model->_view.addImageList((ImgInfo){210, 158, zoomimge, bpp}, 2);
+    }
+
+    filePath = "/mnt/UDISK/pic2.jpg";
+    image = model->jpegImageDecode(filePath, w, h, bpp);
+    if (image != NULL)
+    {
+        unsigned char *zoomimge = model->bitImageZoom(w, h, image, 210, 158, bpp);
+        delete[] image;
+
+        model->_view.addImageList((ImgInfo){210, 158, zoomimge, bpp}, 3);
+    }
+
+    filePath = "/mnt/UDISK/pic2.jpg";
+    image = model->jpegImageDecode(filePath, w, h, bpp);
+    if (image != NULL)
+    {
+        unsigned char *zoomimge = model->bitImageZoom(w, h, image, 210, 158, bpp);
+        delete[] image;
+
+        model->_view.addImageList((ImgInfo){210, 158, zoomimge, bpp}, 4);
+    }
+
+    filePath = "/mnt/UDISK/pic2.jpg";
+    image = model->jpegImageDecode(filePath, w, h, bpp);
+    if (image != NULL)
+    {
+        unsigned char *zoomimge = model->bitImageZoom(w, h, image, 210, 158, bpp);
+        delete[] image;
+
+        model->_view.addImageList((ImgInfo){210, 158, zoomimge, bpp}, 5);
+    }
+
+    filePath = "/mnt/UDISK/pic2.jpg";
+    image = model->jpegImageDecode(filePath, w, h, bpp);
+    if (image != NULL)
+    {
+        unsigned char *zoomimge = model->bitImageZoom(w, h, image, 210, 158, bpp);
+        delete[] image;
+
+        model->_view.addImageList((ImgInfo){210, 158, zoomimge, bpp}, 6);
+    }
+
+    filePath = "/mnt/UDISK/pic2.jpg";
+    image = model->jpegImageDecode(filePath, w, h, bpp);
+    if (image != NULL)
+    {
+        unsigned char *zoomimge = model->bitImageZoom(w, h, image, 210, 158, bpp);
+        delete[] image;
+
+        model->_view.addImageList((ImgInfo){210, 158, zoomimge, bpp}, 7);
+    }
+
+    filePath = "/mnt/UDISK/pic2.jpg";
+    image = model->jpegImageDecode(filePath, w, h, bpp);
+    if (image != NULL)
+    {
+        unsigned char *zoomimge = model->bitImageZoom(w, h, image, 210, 158, bpp);
+        delete[] image;
+
+        model->_view.addImageList((ImgInfo){210, 158, zoomimge, bpp}, 8);
+    }
+
+    filePath = "/mnt/UDISK/pic2.jpg";
+    image = model->jpegImageDecode(filePath, w, h, bpp);
+    if (image != NULL)
+    {
+        unsigned char *zoomimge = model->bitImageZoom(w, h, image, 210, 158, bpp);
+        delete[] image;
+
+        model->_view.addImageList((ImgInfo){210, 158, zoomimge, bpp}, 9);
+    }
+
+    // pthread_mutex_unlock(model->_mutex);
 
     while (!model->_threadExitFlag)
     {
