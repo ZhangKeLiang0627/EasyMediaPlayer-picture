@@ -78,13 +78,18 @@ namespace Page
 
         static void onEvent(lv_event_t *event);
         static void buttonEventHandler(lv_event_t *event);
+        static void imgListClickEventHandler(lv_event_t *event);
+        static void imgEventHandler(lv_event_t *event);
+        void imageDelete(lv_obj_t *img);
 
         lv_obj_t *roundRectCreate(lv_obj_t *par, lv_coord_t x_ofs, lv_coord_t y_ofs);
         lv_obj_t *btnCreate(lv_obj_t *par, const void *img_src, lv_coord_t y_ofs);
+        lv_obj_t *imageCreate(int x, int y, ImgInfo &info);
 
     private:
         lv_img_dsc_t *createImgDsc(ImgInfo &info);
         uint8_t *rgb888Toargb888(const uint8_t *src, int len);
+        void imageChange(int tag, bool dir);
     };
 
 }

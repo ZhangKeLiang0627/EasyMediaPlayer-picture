@@ -148,8 +148,8 @@ void View::listCreate(lv_obj_t *obj)
     lv_obj_align(cont, LV_ALIGN_CENTER, 0, -33);
 
     // 设置网格布局
-    static lv_coord_t col_dsc[] = {210, 21, 210, LV_GRID_TEMPLATE_LAST};                            // 每列宽度为210，间隔为21
-    static lv_coord_t row_dsc[] = {158, 21, 158, 21, 158, 21, 158, 21, 158, LV_GRID_TEMPLATE_LAST}; // 每行高度为158，间隔为21
+    static lv_coord_t col_dsc[] = {210, 21, 210, LV_GRID_TEMPLATE_LAST};                                                                         // 每列宽度为210，间隔为21
+    static lv_coord_t row_dsc[] = {158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, LV_GRID_TEMPLATE_LAST}; // 每行高度为158，间隔为21
     lv_obj_set_grid_dsc_array(cont, col_dsc, row_dsc);
     lv_obj_set_layout(cont, LV_LAYOUT_GRID);
 
@@ -294,13 +294,8 @@ const uint8_t *View::addImageList(ImgInfo info, int tag)
         lv_obj_set_grid_cell(img, LV_GRID_ALIGN_STRETCH, (tag % 2) * 2, 1, LV_GRID_ALIGN_STRETCH, (tag / 2) * 2, 1);
 
         lv_obj_set_user_data(img, data);
-        // lv_obj_add_event_cb(img, img_list_click_event_handler, LV_EVENT_SHORT_CLICKED, nullptr);
 
-        // if (++columnIndex == COLUMN_NUM)
-        // {
-        //     columnIndex = 0;
-        //     rowIndex++;
-        // }
+        lv_obj_add_event_cb(img, imgListClickEventHandler, LV_EVENT_SHORT_CLICKED, this);
     }
 
     return src->data;
@@ -336,6 +331,70 @@ lv_img_dsc_t *View::createImgDsc(ImgInfo &info)
 }
 
 /**
+ *@brief 切换图片显示
+ *@param tag 切换的图片的tag
+ *@param dir 切换的方向，true-正序，false-逆序
+ */
+void View::imageChange(int tag, bool dir)
+{
+    if (_opts.getImageCb != nullptr)
+    {
+        ImgInfo imginfo;
+        _opts.getImageCb(tag, &imginfo);
+
+        printf("img create, tag:%d\n", tag);
+
+        int startX = 480;
+
+        lv_obj_t *img = imageCreate(startX, -100, imginfo);
+
+        if (img != nullptr)
+        {
+            // 添加动画
+            lv_anim_t anim;
+
+            lv_anim_init(&anim);
+            lv_anim_set_var(&anim, img);
+            lv_anim_set_values(&anim, startX, 0);
+            lv_anim_set_time(&anim, 500);
+            lv_anim_set_exec_cb(&anim, (lv_anim_exec_xcb_t)lv_obj_set_x);
+            lv_anim_set_path_cb(&anim, lv_anim_path_ease_out); // 动画轨迹：最后变慢
+            lv_anim_set_ready_cb(&anim, nullptr);
+            lv_anim_start(&anim); // 开启动画
+
+            lv_obj_add_event_cb(img, imgEventHandler, LV_EVENT_ALL, this);
+            lv_obj_add_flag(img, LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE); // 设置可触摸
+
+            lv_obj_add_flag(ui.cont, LV_OBJ_FLAG_SCROLLABLE); // 设置可触摸
+        }
+    }
+}
+
+/**
+ * @brief 在指定位置创建一个img
+ * @param w 图片宽度(像素)
+ * @param h 图片高度(像素)
+ * @param img 创建的img对象
+ */
+lv_obj_t *View::imageCreate(int x, int y, ImgInfo &info)
+{
+    lv_img_dsc_t *src = createImgDsc(info);
+    lv_obj_t *img = nullptr;
+
+    if (src != nullptr)
+    {
+        img = lv_img_create(ui.cont);
+        lv_obj_set_pos(img, x, y);
+        lv_img_set_src(img, src);
+        lv_obj_center(img);
+
+        lv_obj_set_user_data(img, src);
+    }
+
+    return img;
+}
+
+/**
  * @brief rgb888Toargb888
  *
  * @param src
@@ -355,6 +414,79 @@ uint8_t *View::rgb888Toargb888(const uint8_t *src, int len)
     }
 
     return argb888;
+}
+
+/**
+ * @brief 删除img对象及其图像数据
+ */
+void View::imageDelete(lv_obj_t *img)
+{
+    if (img == nullptr)
+        return;
+
+    lv_img_dsc_t *src = (lv_img_dsc_t *)lv_obj_get_user_data(img);
+    if (src != nullptr)
+    {
+        delete[] src->data;
+        delete src;
+    }
+
+    lv_obj_del_async(img);
+}
+
+void View::imgEventHandler(lv_event_t *event)
+{
+    View *instance = (View *)lv_event_get_user_data(event);
+    LV_ASSERT_NULL(instance);
+
+    lv_event_code_t code = lv_event_get_code(event);
+    lv_obj_t *obj = lv_event_get_current_target(event);
+
+    ImgData *data = (ImgData *)lv_obj_get_user_data(obj);
+    static lv_point_t pointLast = {lv_pct(50), lv_pct(50)};
+
+    if (code == LV_EVENT_SHORT_CLICKED)
+    {
+        lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_clear_flag(instance->ui.cont, LV_OBJ_FLAG_SCROLLABLE);
+
+        instance->imageDelete(obj);
+    }
+
+    if (code == LV_EVENT_PRESSING)
+    {
+        lv_point_t pointNow;
+
+        lv_indev_get_point(lv_indev_get_act(), &pointNow);
+
+        lv_coord_t x = pointNow.x - pointLast.x;
+        lv_coord_t y = pointNow.y - pointLast.y;
+
+        // record
+        pointLast.x += x;
+        pointLast.y += y;
+
+        lv_obj_set_pos(obj, pointLast.x, pointLast.y);
+
+        printf("[View] moveX: %d moveY: %d\n", pointLast.x, pointLast.y);
+    }
+}
+
+void View::imgListClickEventHandler(lv_event_t *event)
+{
+    View *instance = (View *)lv_event_get_user_data(event);
+    LV_ASSERT_NULL(instance);
+
+    lv_event_code_t code = lv_event_get_code(event);
+    lv_obj_t *obj = lv_event_get_current_target(event);
+
+    ImgData *data = (ImgData *)lv_obj_get_user_data(obj);
+
+    if (code == LV_EVENT_SHORT_CLICKED)
+    {
+        printf("[View] image short click!\n");
+        instance->imageChange(data->tag, true); // 创建图片
+    }
 }
 
 void View::buttonEventHandler(lv_event_t *event)

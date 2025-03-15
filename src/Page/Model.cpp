@@ -22,7 +22,10 @@ Model::Model(std::function<void(void)> exitCb, pthread_mutex_t &mutex)
 
     // 设置UI回调函数
     Operations uiOpts = {0};
-
+    uiOpts.getImageCb = std::bind(&Model::getImage, this, std::placeholders::_1, std::placeholders::_2);
+    uiOpts.getNextTagCb = std::bind(&Model::getNextTag, this, std::placeholders::_1);
+    uiOpts.getPrevTagCb = std::bind(&Model::getPrevTag, this, std::placeholders::_1);
+    uiOpts.changeListPageCb = std::bind(&Model::changeImageListPage, this, std::placeholders::_1);
     _view.create(uiOpts);
 
     // 这里设置一个1000ms的定时器，软定时器，用于在onTimerUpdate里update
@@ -70,24 +73,45 @@ void *Model::threadProcHandler(void *arg)
 
     usleep(5000);
 
+    std::string imagePath = IMAGE_DIR;
+
+    int imgTotal = model->searchImage(imagePath, 300);
+    printf("[Model] search image complete! total:%d\n", imgTotal);
+
     int w, h, bpp;
     unsigned char *image = nullptr;
 
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < imgTotal; i++)
     {
-        pthread_mutex_lock(model->_mutex);
+        // std::string filePath = "/mnt/UDISK/pictures/" + std::to_string(i + 1) + ".jpg";
+        std::string filePath = model->_imageTable[i];
 
-        std::string filePath = "/mnt/UDISK/pictures/" + std::to_string(i + 1) + ".jpg";
-        image = model->jpegImageDecode(filePath, w, h, bpp);
+        const char *pfile = strrchr(filePath.c_str(), '.');
+        if (strcasecmp(pfile, ".bmp") == 0)
+        {
+            printf("bmp file\n");
+            image = bmpImageDecode(filePath, w, h, bpp);
+        }
+        else if (strcasecmp(pfile, ".jpg") == 0 || strcasecmp(pfile, ".jpeg") == 0)
+        {
+            printf("jpg/jpeg file\n");
+            image = jpegImageDecode(filePath, w, h, bpp);
+        }
+        else if (strcasecmp(pfile, ".png") == 0)
+        {
+            printf("png file\n");
+            image = pngImageDecode(filePath, w, h, bpp);
+        }
+
         if (image != NULL)
         {
             unsigned char *zoomimge = model->bitImageZoom(w, h, image, 210, 158, bpp);
             delete[] image;
-
+            pthread_mutex_lock(model->_mutex);
             model->_view.addImageList((ImgInfo){210, 158, zoomimge, bpp}, i);
+            pthread_mutex_unlock(model->_mutex);
         }
-        pthread_mutex_unlock(model->_mutex);
-        usleep(30000);
+        // usleep(30000);
     }
 
     while (!model->_threadExitFlag)
@@ -95,6 +119,60 @@ void *Model::threadProcHandler(void *arg)
 
         usleep(50000);
     }
+}
+
+int Model::searchImage(std::string &path, int listMax)
+{
+    int count = 0;
+    bool legalImg = false;
+    std::string filePath;
+
+    struct dirent *ent;
+    DIR *dir = opendir(path.c_str());
+
+    for (int i = 0; i < listMax; i++)
+    {
+        ent = readdir(dir);
+        if (ent == NULL)
+            break;
+
+        if (ent->d_type == DT_REG)
+        {
+            const char *pfile = strrchr(ent->d_name, '.');
+            if (pfile != NULL)
+            {
+                filePath = path + std::string(ent->d_name);
+
+                if (strcasecmp(pfile, ".bmp") == 0)
+                {
+                    printf("bmp file\n");
+                    legalImg = true;
+                }
+                else if (strcasecmp(pfile, ".jpg") == 0 || strcasecmp(pfile, ".jpeg") == 0)
+                {
+                    printf("jpg/jpeg file\n");
+                    legalImg = true;
+                }
+                else if (strcasecmp(pfile, ".png") == 0)
+                {
+                    printf("png file\n");
+                    legalImg = true;
+                }
+            }
+        }
+        if (legalImg == true)
+        {
+            legalImg = false;
+            _imageTable.insert({count, filePath}); // 将图像索引和文件名插入map
+            count++;
+        }
+
+        // usleep(50000);
+    }
+
+    closedir(dir);
+
+    return count;
 }
 
 unsigned char *Model::bmpImageDecode(std::string &file, int &wight, int &height, int &bitPerPixel)
@@ -196,4 +274,68 @@ unsigned char *Model::bitImageZoom(int w, int h, unsigned char *bmpin, int zoomw
     }
 
     return bmpout;
+}
+
+void Model::getImage(int tag, ImgInfo *info)
+{
+    std::string path = _imageTable[tag];
+    unsigned char *image = NULL;
+
+    const char *pfile = strrchr(path.c_str(), '.');
+    if (pfile != NULL)
+    {
+        int w, h, bpp;
+
+        if (strcasecmp(pfile, ".bmp") == 0)
+        {
+            printf("bmp file\n");
+            image = bmpImageDecode(path, w, h, bpp);
+        }
+        else if (strcasecmp(pfile, ".jpg") == 0 || strcasecmp(pfile, ".jpeg") == 0)
+        {
+            printf("jpg/jpeg file\n");
+            image = jpegImageDecode(path, w, h, bpp);
+        }
+        else if (strcasecmp(pfile, ".png") == 0)
+        {
+            printf("png file\n");
+            image = pngImageDecode(path, w, h, bpp);
+        }
+
+        info->w = w;
+        info->h = h;
+        info->bpp = bpp;
+        info->imgMap = image;
+    }
+}
+
+int Model::getNextTag(int curTag)
+{
+    int tag = curTag + 1;
+
+    int imgTotal = _imageTable.size();
+
+    if (tag == imgTotal)
+        tag = 0;
+
+    return tag;
+}
+
+int Model::getPrevTag(int curTag)
+{
+    int tag = curTag - 1;
+
+    int imgTotal = _imageTable.size();
+
+    if (tag < 0)
+        tag = imgTotal - 1;
+
+    return tag;
+}
+
+void Model::changeImageListPage(int page)
+{
+    // destpage = page;
+
+    // updateMutex.unlock(); // 释放互斥量
 }
