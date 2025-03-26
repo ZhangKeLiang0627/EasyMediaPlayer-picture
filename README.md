@@ -2,6 +2,10 @@
 
 # eMP_picture
 
+## Snapshots
+
+![](./pictures/image-1.jpg)
+
 ## 环境
 
 ```shell
