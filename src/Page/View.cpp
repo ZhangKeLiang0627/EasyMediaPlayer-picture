@@ -131,11 +131,11 @@ void View::btnContCreate(lv_obj_t *obj)
     ui.btnCont.btn = btn;
 
     lv_obj_t *catGif1 = lv_gif_create(btnCont);
-    lv_gif_set_src(catGif1, "S:./cat1.gif");
+    lv_gif_set_src(catGif1, "S:./picture/gif/cat1.gif");
     lv_obj_align_to(catGif1, btn, LV_ALIGN_OUT_LEFT_MID, -20, -10);
 
     lv_obj_t *catGif2 = lv_gif_create(btnCont);
-    lv_gif_set_src(catGif2, "S:./cat2.gif");
+    lv_gif_set_src(catGif2, "S:./picture/gif/cat2.gif");
     lv_obj_align_to(catGif2, btn, LV_ALIGN_OUT_RIGHT_MID, 20, -5);
 }
 

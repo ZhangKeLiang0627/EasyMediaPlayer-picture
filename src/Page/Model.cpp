@@ -5,7 +5,7 @@
 #include "PngImage.h"
 #include "BitImage.h"
 
-#define IMAGE_DIR "/mnt/UDISK/pictures/"
+#define IMAGE_DIR "/mnt/UDISK/picture/album/"
 
 using namespace Page;
 
