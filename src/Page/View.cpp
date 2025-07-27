@@ -218,6 +218,7 @@ const uint8_t *View::addImageList(ImgInfo info, int tag)
         lv_img_set_src(img, src);
 
         lv_obj_set_style_bg_color(img, lv_color_black(), LV_PART_MAIN);
+        // lv_obj_clear_flag(img, LV_OBJ_FLAG_SCROLLABLE);
 
         lv_obj_set_style_radius(img, 12, LV_PART_MAIN);
         lv_obj_set_style_clip_corner(img, true, LV_PART_MAIN);
@@ -307,9 +308,9 @@ void View::imageChange(int tag, bool dir)
             lv_anim_start(&anim); // 开启动画
 
             lv_obj_add_event_cb(img, imgEventHandler, LV_EVENT_ALL, this);
-            lv_obj_add_flag(img, LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE); // 设置可触摸
-
-            lv_obj_add_flag(ui.cont, LV_OBJ_FLAG_SCROLLABLE); // 设置可触摸
+            lv_obj_add_flag(img, LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_CLICKABLE);
+            lv_obj_clear_flag(img, LV_OBJ_FLAG_SCROLLABLE);
+       
         }
     }
 }
@@ -331,7 +332,7 @@ lv_obj_t *View::imageCreate(int x, int y, ImgInfo &info)
         lv_obj_set_pos(img, x, y);
         lv_img_set_src(img, src);
         lv_obj_center(img);
-
+        
         lv_obj_set_user_data(img, src);
     }
 
@@ -392,28 +393,29 @@ void View::imgEventHandler(lv_event_t *event)
     if (code == LV_EVENT_SHORT_CLICKED)
     {
         lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_clear_flag(instance->ui.cont, LV_OBJ_FLAG_SCROLLABLE);
+        // lv_obj_clear_flag(instance->ui.cont, LV_OBJ_FLAG_SCROLLABLE);
 
         instance->imageDelete(obj);
     }
 
-    if (code == LV_EVENT_PRESSING)
-    {
-        lv_point_t pointNow;
+    // 这个打开的话，图片可以跟着手指触摸移动
+    // if (code == LV_EVENT_PRESSING)
+    // {
+    //     lv_point_t pointNow;
 
-        lv_indev_get_point(lv_indev_get_act(), &pointNow);
+    //     lv_indev_get_point(lv_indev_get_act(), &pointNow);
 
-        lv_coord_t x = pointNow.x - pointLast.x;
-        lv_coord_t y = pointNow.y - pointLast.y;
+    //     lv_coord_t x = pointNow.x - pointLast.x;
+    //     lv_coord_t y = pointNow.y - pointLast.y;
 
-        // record
-        pointLast.x += x;
-        pointLast.y += y;
+    //     // record
+    //     pointLast.x += x;
+    //     pointLast.y += y;
 
-        lv_obj_set_pos(obj, pointLast.x, pointLast.y);
+    //     lv_obj_set_pos(obj, pointLast.x, pointLast.y);
 
-        printf("[View] moveX: %d moveY: %d\n", pointLast.x, pointLast.y);
-    }
+    //     printf("[View] moveX: %d moveY: %d\n", pointLast.x, pointLast.y);
+    // }
 }
 
 void View::imgListClickEventHandler(lv_event_t *event)

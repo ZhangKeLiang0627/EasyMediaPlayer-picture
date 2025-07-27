@@ -302,10 +302,18 @@ void Model::getImage(int tag, ImgInfo *info)
             image = pngImageDecode(path, w, h, bpp);
         }
 
-        info->w = w;
-        info->h = h;
+        // info->w = w;
+        // info->h = h;
+        // info->bpp = bpp;
+        // info->imgMap = image;
+
+        unsigned char *zoomimge = bitImageZoom(w, h, image, 480, 480, bpp);
+        delete[] image;
+
+        info->w = 480;
+        info->h = 480;
         info->bpp = bpp;
-        info->imgMap = image;
+        info->imgMap = zoomimge;
     }
 }
 
