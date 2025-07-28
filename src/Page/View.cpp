@@ -310,7 +310,6 @@ void View::imageChange(int tag, bool dir)
             lv_obj_add_event_cb(img, imgEventHandler, LV_EVENT_ALL, this);
             lv_obj_add_flag(img, LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_CLICKABLE);
             lv_obj_clear_flag(img, LV_OBJ_FLAG_SCROLLABLE);
-       
         }
     }
 }
@@ -332,7 +331,7 @@ lv_obj_t *View::imageCreate(int x, int y, ImgInfo &info)
         lv_obj_set_pos(img, x, y);
         lv_img_set_src(img, src);
         lv_obj_center(img);
-        
+
         lv_obj_set_user_data(img, src);
     }
 
@@ -454,7 +453,7 @@ void View::buttonEventHandler(lv_event_t *event)
 
     if (code == LV_EVENT_SHORT_CLICKED)
     {
-        instance->appearAnimClick();
+        // instance->appearAnimClick(); # 按钮动画removed
         instance->_opts.exitCb();
     }
 }

@@ -22,6 +22,7 @@ Model::Model(std::function<void(void)> exitCb, pthread_mutex_t &mutex)
 
     // 设置UI回调函数
     Operations uiOpts = {0};
+    uiOpts.exitCb = exitCb;
     uiOpts.getImageCb = std::bind(&Model::getImage, this, std::placeholders::_1, std::placeholders::_2);
     uiOpts.getNextTagCb = std::bind(&Model::getNextTag, this, std::placeholders::_1);
     uiOpts.getPrevTagCb = std::bind(&Model::getPrevTag, this, std::placeholders::_1);
@@ -38,9 +39,13 @@ Model::~Model()
 {
     _threadExitFlag = true;
 
+    printf("[Model] picture end 1\n");
+
     lv_timer_del(_timer);
+    printf("[Model] picture end 2\n");
 
     _view.release();
+    printf("[Model] picture end 3\n");
 }
 
 /**

@@ -54,5 +54,7 @@ static void exitCallback(void)
 {
     delete model;
 
+    printf("[Sys] EasyMediaPlayer picture end!\n");
+
     exit(0);
 }
