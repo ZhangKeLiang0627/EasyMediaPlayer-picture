@@ -6,6 +6,7 @@
 #include "BitImage.h"
 
 #define IMAGE_DIR "/mnt/UDISK/picture/album/"
+#define SD_IMAGE_DIR "/mnt/exUDISK/picture/album/"
 
 using namespace Page;
 
@@ -78,9 +79,12 @@ void *Model::threadProcHandler(void *arg)
 
     usleep(5000);
 
-    std::string imagePath = IMAGE_DIR;
+    std::string imagePath_local = IMAGE_DIR;
+    std::string imagePath_udisk = SD_IMAGE_DIR;
 
-    int imgTotal = model->searchImage(imagePath, 300);
+    int imgTotal = model->searchImage(imagePath_local, 300);
+
+    imgTotal = model->searchImage(imagePath_udisk, 300, imgTotal);
     printf("[Model] search image complete! total:%d\n", imgTotal);
 
     int w, h, bpp;
@@ -126,14 +130,20 @@ void *Model::threadProcHandler(void *arg)
     }
 }
 
-int Model::searchImage(std::string &path, int listMax)
+int Model::searchImage(std::string &path, int listMax, int startIndex)
 {
-    int count = 0;
+    int count = startIndex ? startIndex : 0;
     bool legalImg = false;
     std::string filePath;
 
     struct dirent *ent;
     DIR *dir = opendir(path.c_str());
+
+    if (dir == NULL)
+    {
+        printf("[Model] open dir failed: %s\n", path.c_str());
+        return startIndex;
+    }
 
     for (int i = 0; i < listMax; i++)
     {

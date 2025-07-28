@@ -31,7 +31,7 @@ namespace Page
         static unsigned char *jpegImageDecode(std::string &file, int &wight, int &height, int &bitPerPixel);
         static unsigned char *pngImageDecode(std::string &file, int &wight, int &height, int &bitPerPixel);
         static unsigned char *bitImageZoom(int w, int h, unsigned char *bmpin, int zoomw, int zoomh, int bpp);
-        int searchImage(std::string &path, int listMax);
+        int searchImage(std::string &path, int listMax, int startIndex = 0);
 
         void getImage(int tag, ImgInfo *info);
         int getNextTag(int curTag);

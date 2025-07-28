@@ -102,8 +102,8 @@ void View::listCreate(lv_obj_t *obj)
     lv_obj_align(cont, LV_ALIGN_CENTER, 0, -33);
 
     // 设置网格布局
-    static lv_coord_t col_dsc[] = {210, 21, 210, LV_GRID_TEMPLATE_LAST};                                                                         // 每列宽度为210，间隔为21
-    static lv_coord_t row_dsc[] = {158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, LV_GRID_TEMPLATE_LAST}; // 每行高度为158，间隔为21
+    static lv_coord_t col_dsc[] = {210, 21, 210, LV_GRID_TEMPLATE_LAST};                                                                                                                                                                                                                                                             // 每列宽度为210，间隔为21
+    static lv_coord_t row_dsc[] = {158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, LV_GRID_TEMPLATE_LAST}; // 每行高度为158，间隔为21
     lv_obj_set_grid_dsc_array(cont, col_dsc, row_dsc);
     lv_obj_set_layout(cont, LV_LAYOUT_GRID);
 
