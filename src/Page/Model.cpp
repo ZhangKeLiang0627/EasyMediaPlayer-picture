@@ -5,6 +5,8 @@
 #include "PngImage.h"
 #include "BitImage.h"
 
+#include "Animations.h"
+
 #define IMAGE_DIR "/mnt/UDISK/picture/album/"
 #define SD_IMAGE_DIR "/mnt/exUDISK/picture/album/"
 
@@ -40,13 +42,12 @@ Model::~Model()
 {
     _threadExitFlag = true;
 
-    printf("[Model] picture end 1\n");
+    // 等待线程退出，回收资源
+    pthread_join(_pthread, NULL);
 
     lv_timer_del(_timer);
-    printf("[Model] picture end 2\n");
 
     _view.release();
-    printf("[Model] picture end 3\n");
 }
 
 /**
@@ -67,6 +68,10 @@ void Model::onTimerUpdate(lv_timer_t *timer)
 void Model::update(void)
 {
 }
+
+static const int image_pos_x_lut[4] = {-20, -15, -5, 10};
+static const int image_pos_y_lut[4] = {12, 8, 4, 0};
+static const int image_fly_delay_lut[4] = {150, 100, 50, 0};
 
 /**
  * @brief 线程处理函数
@@ -90,38 +95,52 @@ void *Model::threadProcHandler(void *arg)
     int w, h, bpp;
     unsigned char *image = nullptr;
 
-    for (int i = 0; i < imgTotal; i++)
+    // for (int i = 0; i < imgTotal; i++)
+    // {
+    //     // std::string filePath = "/mnt/UDISK/pictures/" + std::to_string(i + 1) + ".jpg";
+    //     std::string filePath = model->_imageTable[i];
+
+    //     const char *pfile = strrchr(filePath.c_str(), '.');
+    //     if (strcasecmp(pfile, ".bmp") == 0)
+    //     {
+    //         printf("bmp file\n");
+    //         image = bmpImageDecode(filePath, w, h, bpp);
+    //     }
+    //     else if (strcasecmp(pfile, ".jpg") == 0 || strcasecmp(pfile, ".jpeg") == 0)
+    //     {
+    //         printf("jpg/jpeg file\n");
+    //         image = jpegImageDecode(filePath, w, h, bpp);
+    //     }
+    //     else if (strcasecmp(pfile, ".png") == 0)
+    //     {
+    //         printf("png file\n");
+    //         image = pngImageDecode(filePath, w, h, bpp);
+    //     }
+
+    //     if (image != NULL)
+    //     {
+    //         unsigned char *zoomimge = model->bitImageZoom(w, h, image, 210, 158, bpp);
+    //         delete[] image;
+    //         pthread_mutex_lock(model->_mutex);
+    //         model->_view.addImageList((ImgInfo){210, 158, zoomimge, bpp}, i);
+    //         pthread_mutex_unlock(model->_mutex);
+    //     }
+    //     // usleep(30000);
+    // }
+
+    ImgInfo imginfo;
+    imginfo.w = 320;
+    imginfo.h = 240;
+    for (int i = 0; i < 4; i++)
     {
-        // std::string filePath = "/mnt/UDISK/pictures/" + std::to_string(i + 1) + ".jpg";
-        std::string filePath = model->_imageTable[i];
-
-        const char *pfile = strrchr(filePath.c_str(), '.');
-        if (strcasecmp(pfile, ".bmp") == 0)
-        {
-            printf("bmp file\n");
-            image = bmpImageDecode(filePath, w, h, bpp);
-        }
-        else if (strcasecmp(pfile, ".jpg") == 0 || strcasecmp(pfile, ".jpeg") == 0)
-        {
-            printf("jpg/jpeg file\n");
-            image = jpegImageDecode(filePath, w, h, bpp);
-        }
-        else if (strcasecmp(pfile, ".png") == 0)
-        {
-            printf("png file\n");
-            image = pngImageDecode(filePath, w, h, bpp);
-        }
-
-        if (image != NULL)
-        {
-            unsigned char *zoomimge = model->bitImageZoom(w, h, image, 210, 158, bpp);
-            delete[] image;
-            pthread_mutex_lock(model->_mutex);
-            model->_view.addImageList((ImgInfo){210, 158, zoomimge, bpp}, i);
-            pthread_mutex_unlock(model->_mutex);
-        }
-        // usleep(30000);
+        model->getImage(i, &imginfo);
+        lv_obj_t *img = model->_view.galleryImageCreate(model->_view.ui.listCont.cont, imginfo, image_pos_x_lut[i], image_pos_y_lut[i]);
+        lv_anim_fly_up(img, 125, 700, image_fly_delay_lut[i]);
     }
+
+
+
+    printf("current child: %d\n", lv_obj_get_child_cnt(model->_view.ui.listCont.cont));
 
     while (!model->_threadExitFlag)
     {
@@ -317,18 +336,27 @@ void Model::getImage(int tag, ImgInfo *info)
             image = pngImageDecode(path, w, h, bpp);
         }
 
-        // info->w = w;
-        // info->h = h;
-        // info->bpp = bpp;
-        // info->imgMap = image;
+        if(info->w == 0 && info->w == 0)
+        {
+            unsigned char *zoomimge = bitImageZoom(w, h, image, 480, 480, bpp);
+            delete[] image;
 
-        unsigned char *zoomimge = bitImageZoom(w, h, image, 480, 480, bpp);
-        delete[] image;
+            info->w = 480;
+            info->h = 480;
+            info->bpp = bpp;
+            info->imgMap = zoomimge;
+        }
+        else
+        {
+            unsigned char *zoomimge = bitImageZoom(w, h, image, info->w, info->h, bpp);
+            delete[] image;
 
-        info->w = 480;
-        info->h = 480;
-        info->bpp = bpp;
-        info->imgMap = zoomimge;
+            // info->w = 480;
+            // info->h = 480;
+            info->bpp = bpp;
+            info->imgMap = zoomimge;
+        }
+
     }
 }
 

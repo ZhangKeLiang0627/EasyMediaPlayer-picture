@@ -1,6 +1,11 @@
 #include "View.h"
-
+#include "Animations.h"
 using namespace Page;
+
+static const int image_pos_x_lut[4] = {-20, -15, -5, 10};
+static const int image_pos_y_lut[4] = {12, 8, 4, 0};
+static const int image_fly_delay_lut[4] = {150, 100, 50, 0};
+static int image_id = 3;
 
 void View::create(Operations &opts)
 {
@@ -16,11 +21,16 @@ void View::create(Operations &opts)
     // 按钮画布的创建
     btnContCreate(ui.cont);
 
+    // topContCreate
+    topContCreate(ui.cont);
+
     // 为当前屏幕添加事件回调函数
     AttachEvent(lv_scr_act());
+    AttachEvent(ui.topCont.cancelBtn);
 
     // 动画的创建
     ui.anim_timeline = lv_anim_timeline_create();
+    ui.anim_timelineTop = lv_anim_timeline_create();
 
 #define ANIM_DEF(start_time, obj, attr, start, end) \
     {start_time, obj, LV_ANIM_EXEC(attr), start, end, 500, lv_anim_path_ease_out, true}
@@ -37,7 +47,17 @@ void View::create(Operations &opts)
         };
     lv_anim_timeline_add_wrapper(ui.anim_timeline, wrapper);
 
+    lv_anim_timeline_wrapper_t wrapperTop[] =
+        {
+            ANIM_DEF(0, ui.topCont.cont, y, -40, lv_obj_get_x_aligned(ui.topCont.cont)),
+            ANIM_DEF(0, ui.topCont.cont, width, 20, lv_obj_get_width(ui.topCont.cont)),
+
+            LV_ANIM_TIMELINE_WRAPPER_END // 这个标志着结构体成员结束，不能省略，在下面函数lv_anim_timeline_add_wrapper的轮询中做判断条件
+        };
+    lv_anim_timeline_add_wrapper(ui.anim_timelineTop, wrapperTop);
+
     // 开始动画
+    appearAnimTop();
     appearAnimStart();
 }
 
@@ -69,6 +89,14 @@ void View::appearAnimClick(bool reverse) // 按钮动画
     lv_anim_timeline_start(ui.anim_timelineClick);
 }
 
+void View::appearAnimTop(bool reverse) // topCont动画
+{
+    lv_anim_timeline_set_reverse(ui.anim_timelineTop, reverse);
+    lv_anim_timeline_start(ui.anim_timelineTop);
+
+    ui.isTopContCollapsed = reverse;
+}
+
 void View::AttachEvent(lv_obj_t *obj)
 {
     lv_obj_add_event_cb(obj, onEvent, LV_EVENT_ALL, this);
@@ -81,8 +109,8 @@ void View::contCreate(lv_obj_t *obj)
     lv_obj_remove_style_all(cont);
     lv_obj_set_size(cont, LV_HOR_RES, LV_VER_RES);
     lv_obj_clear_flag(cont, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_set_style_bg_opa(cont, LV_OPA_TRANSP, 0);
-    lv_obj_set_style_bg_color(cont, lv_color_hex(0xcccccc), 0);
+    lv_obj_set_style_bg_opa(cont, LV_OPA_COVER, 0);
+    lv_obj_set_style_bg_color(cont, lv_color_hex(0xc39ac9), 0);
     // lv_obj_set_style_bg_img_src(cont, "S:./res/icon/main1.bin", 0);
     // lv_obj_set_style_bg_img_opa(cont, LV_OPA_COVER, 0);
     lv_obj_align(cont, LV_ALIGN_CENTER, 0, 0);
@@ -94,23 +122,64 @@ void View::listCreate(lv_obj_t *obj)
 {
     lv_obj_t *cont = lv_obj_create(obj);
     lv_obj_remove_style_all(cont);
-    lv_obj_set_size(cont, LV_HOR_RES - 30, lv_pct(80));
+    lv_obj_set_size(cont, LV_HOR_RES - 30, lv_pct(70));
     lv_obj_add_flag(cont, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_set_style_bg_opa(cont, LV_OPA_TRANSP, 0);
+    lv_obj_set_style_bg_opa(cont, LV_OPA_COVER, 0);
     lv_obj_set_style_radius(cont, 10, 0);
     lv_obj_set_style_bg_color(cont, lv_color_hex(0x888888), 0);
-    lv_obj_align(cont, LV_ALIGN_CENTER, 0, -33);
+    lv_obj_align(cont, LV_ALIGN_CENTER, 0, -20);
 
-    // 设置网格布局
-    static lv_coord_t col_dsc[] = {210, 21, 210, LV_GRID_TEMPLATE_LAST};                                                                                                                                                                                                                                                             // 每列宽度为210，间隔为21
-    static lv_coord_t row_dsc[] = {158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, LV_GRID_TEMPLATE_LAST}; // 每行高度为158，间隔为21
-    lv_obj_set_grid_dsc_array(cont, col_dsc, row_dsc);
-    lv_obj_set_layout(cont, LV_LAYOUT_GRID);
+    // // 设置网格布局
+    // static lv_coord_t col_dsc[] = {210, 21, 210, LV_GRID_TEMPLATE_LAST}; // 每列宽度为210，间隔为21
+    // static lv_coord_t row_dsc[] = {158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, 21, 158, LV_GRID_TEMPLATE_LAST}; // 每行高度为158，间隔为21
+    // lv_obj_set_grid_dsc_array(cont, col_dsc, row_dsc);
+    // lv_obj_set_layout(cont, LV_LAYOUT_GRID);
+    // // 设置内边距
+    // lv_obj_set_style_pad_all(cont, 4, 0); 
 
-    // 设置内边距
-    lv_obj_set_style_pad_all(cont, 4, 0); // 设置所有方向的内边距为4像素
+    lv_obj_clear_flag(cont, LV_OBJ_FLAG_SCROLLABLE);
 
     ui.listCont.cont = cont;
+}
+
+void View::topContCreate(lv_obj_t *obj)
+{
+    lv_obj_t *cont = lv_obj_create(obj);
+    lv_obj_remove_style_all(cont);
+    lv_obj_set_size(cont, lv_pct(90), lv_pct(8));
+    lv_obj_clear_flag(cont, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_opa(cont, LV_OPA_90, 0);
+    lv_obj_set_style_bg_color(cont, lv_color_hex(0xeeeeee), 0);
+    lv_obj_align(cont, LV_ALIGN_TOP_MID, 0, 0);
+    lv_obj_set_style_radius(cont, 5, LV_PART_MAIN);
+    ui.topCont.cont = cont;
+
+    lv_obj_t *btn = btnCreate(cont, nullptr, 0, 0, 30, 30);
+    lv_obj_align(btn, LV_ALIGN_TOP_RIGHT, -5, 4);
+    lv_obj_set_style_bg_color(btn, lv_color_hex(0xff6056), LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(btn, lv_color_hex(0xe44543), LV_STATE_PRESSED);
+    lv_obj_set_style_bg_color(btn, lv_color_hex(0xe44543), LV_STATE_FOCUSED);
+    ui.topCont.cancelBtn = btn;
+
+    lv_obj_t *cancelBtnLabel = lv_label_create(ui.topCont.cancelBtn);
+    lv_obj_remove_style_all(cancelBtnLabel);
+    lv_obj_set_style_text_font(cancelBtnLabel, &lv_font_montserrat_20, LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(cancelBtnLabel, lv_color_hex(0xffffff), LV_STATE_DEFAULT);
+    lv_obj_center(cancelBtnLabel);
+    lv_obj_align(cancelBtnLabel, LV_ALIGN_CENTER, 0, 0);
+    lv_label_set_text(cancelBtnLabel, "x");
+
+    lv_obj_t *titleLabel = lv_label_create(cont);
+    lv_obj_remove_style_all(titleLabel);
+    lv_obj_set_style_text_font(titleLabel, &lv_font_montserrat_20, LV_STATE_DEFAULT);
+    lv_obj_set_style_text_align(titleLabel, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
+    lv_obj_set_style_text_color(titleLabel, lv_color_black(), 0);
+    lv_label_set_long_mode(titleLabel, LV_LABEL_LONG_SCROLL_CIRCULAR);
+    lv_obj_align(titleLabel, LV_ALIGN_CENTER, 0, 0);
+    lv_label_set_text(titleLabel, "Picture");
+    // lv_obj_set_size(titleLabel, lv_pct(60), LV_SIZE_CONTENT);
+
+    ui.topCont.titleLabel = titleLabel;
 }
 
 // 按钮画布的创建
@@ -126,32 +195,33 @@ void View::btnContCreate(lv_obj_t *obj)
     lv_obj_set_style_radius(btnCont, 16, LV_PART_MAIN);
     ui.btnCont.cont = btnCont;
 
-    lv_obj_t *btn = btnCreate(btnCont, LV_SYMBOL_PLAY, -20);
+    lv_obj_t *btn = btnCreate(btnCont, LV_SYMBOL_PLAY, 0, -20, 120, 40);
+    lv_obj_align(btn, LV_ALIGN_TOP_MID, 0, 25);
     lv_obj_add_event_cb(btn, buttonEventHandler, LV_EVENT_ALL, this);
     ui.btnCont.btn = btn;
 
     lv_obj_t *catGif1 = lv_gif_create(btnCont);
     lv_gif_set_src(catGif1, "S:./picture/gif/cat1.gif");
-    lv_obj_align_to(catGif1, btn, LV_ALIGN_OUT_LEFT_MID, -20, -10);
+    lv_obj_align(catGif1, LV_ALIGN_TOP_LEFT, 15, 0);
 
     lv_obj_t *catGif2 = lv_gif_create(btnCont);
     lv_gif_set_src(catGif2, "S:./picture/gif/cat2.gif");
-    lv_obj_align_to(catGif2, btn, LV_ALIGN_OUT_RIGHT_MID, 20, -5);
+    lv_obj_align(catGif2, LV_ALIGN_TOP_RIGHT, -15, 0);
 }
 
-lv_obj_t *View::btnCreate(lv_obj_t *par, const void *img_src, lv_coord_t y_ofs)
+lv_obj_t *View::btnCreate(lv_obj_t *par, const void *img_src, lv_coord_t x_ofs, lv_coord_t y_ofs, lv_coord_t w, lv_coord_t h)
 {
     lv_obj_t *obj = lv_obj_create(par);
     lv_obj_remove_style_all(obj);
-    lv_obj_set_size(obj, 180, 50);
+    lv_obj_set_size(obj, w, h);
     lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLLABLE);
 
-    lv_obj_align(obj, LV_ALIGN_CENTER, 0, y_ofs);
+    lv_obj_align(obj, LV_ALIGN_LEFT_MID, x_ofs, y_ofs);
     lv_obj_set_style_bg_img_src(obj, img_src, 0);
 
     lv_obj_set_style_bg_opa(obj, LV_OPA_COVER, 0);
-    lv_obj_set_style_width(obj, 150, LV_STATE_PRESSED);                        // 设置button按下时的宽
-    lv_obj_set_style_height(obj, 40, LV_STATE_PRESSED);                        // 设置button按下时的长
+    lv_obj_set_style_width(obj, w / 1.5f, LV_STATE_PRESSED);                   // 设置button按下时的宽
+    lv_obj_set_style_height(obj, h / 1.5f, LV_STATE_PRESSED);                  // 设置button按下时的长
     lv_obj_set_style_bg_color(obj, lv_color_hex(0x356b8c), 0);                 // 设置按钮默认的颜色
     lv_obj_set_style_bg_color(obj, lv_color_hex(0x242947), LV_STATE_PRESSED);  // 设置按钮在被按下时的颜色
     lv_obj_set_style_bg_color(obj, lv_color_hex(0xf2daaa), LV_STATE_FOCUSED);  // 设置按钮在被聚焦时的颜色
@@ -284,7 +354,10 @@ void View::imageChange(int tag, bool dir)
 {
     if (_opts.getImageCb != nullptr)
     {
-        ImgInfo imginfo;
+        ImgInfo imginfo = {0};
+        // imginfo.w = 480;
+        // imginfo.h = 480;
+
         _opts.getImageCb(tag, &imginfo);
 
         printf("img create, tag:%d\n", tag);
@@ -333,6 +406,34 @@ lv_obj_t *View::imageCreate(int x, int y, ImgInfo &info)
         lv_obj_center(img);
 
         lv_obj_set_user_data(img, src);
+    }
+
+    return img;
+}
+
+/**
+ * @brief 在指定位置创建一个img
+ * @param w 图片宽度(像素)
+ * @param h 图片高度(像素)
+ * @param img 创建的img对象
+ */
+lv_obj_t *View::galleryImageCreate(lv_obj_t *parent, ImgInfo &info, int x_ofs, int y_ofs)
+{
+    lv_img_dsc_t *src = createImgDsc(info);
+    lv_obj_t *obj = nullptr;
+    lv_obj_t *img = nullptr;
+
+    if (src != nullptr)
+    {
+        img = lv_img_create(parent);
+        lv_img_set_src(img, src);
+        lv_obj_set_style_radius(img, 8, LV_PART_MAIN);
+        lv_obj_set_style_clip_corner(img, true, LV_PART_MAIN);
+        lv_obj_align(img, LV_ALIGN_CENTER, x_ofs, y_ofs);
+        lv_obj_add_flag(img, LV_OBJ_FLAG_CLICKABLE);
+
+        lv_obj_set_user_data(img, src);
+        lv_obj_add_event_cb(img, imgListClickEventHandler, LV_EVENT_LONG_PRESSED, this);
     }
 
     return img;
@@ -427,10 +528,11 @@ void View::imgListClickEventHandler(lv_event_t *event)
 
     ImgData *data = (ImgData *)lv_obj_get_user_data(obj);
 
-    if (code == LV_EVENT_SHORT_CLICKED)
+    if (code == LV_EVENT_LONG_PRESSED)
     {
         printf("[View] image short click!\n");
-        instance->imageChange(data->tag, true); // 创建图片
+        // instance->imageChange(data->tag, true); // 创建图片
+        instance->imageChange(image_id, true); // 创建图片
     }
 }
 
@@ -466,29 +568,107 @@ void View::onEvent(lv_event_t *event)
     lv_obj_t *obj = lv_event_get_current_target(event);
     lv_event_code_t code = lv_event_get_code(event);
 
-    if (code == LV_EVENT_GESTURE)
+    if (code == LV_EVENT_SHORT_CLICKED)
     {
-        switch (lv_indev_get_gesture_dir(lv_indev_get_act()))
+        if (obj == instance->ui.topCont.cancelBtn)
         {
-        case LV_DIR_LEFT:
-            printf("[View] LV_DIR_LEFT!\n");
-
-            break;
-        case LV_DIR_RIGHT:
-            printf("[View] LV_DIR_RIGHT!\n");
-
-            break;
-        case LV_DIR_TOP:
-            printf("[View] LV_DIR_TOP!\n");
-
-            break;
-        case LV_DIR_BOTTOM:
-            printf("[View] LV_DIR_BOTTOM!\n");
-            // instance->_opts.exitCb();
-            break;
-
-        default:
-            break;
+            // to quit this app
+            printf("[View] quit!\n");
+            if (instance->_opts.exitCb)
+                instance->_opts.exitCb();
         }
     }
+    else if (code == LV_EVENT_GESTURE)
+    {
+        if (obj == lv_scr_act())
+        {
+            switch (lv_indev_get_gesture_dir(lv_indev_get_act()))
+            {
+            case LV_DIR_LEFT:
+                printf("[View] LV_DIR_LEFT!\n");
+                instance->image_obj_slide_left();
+                break;
+            case LV_DIR_RIGHT:
+                printf("[View] LV_DIR_RIGHT!\n");
+
+                instance->image_obj_slide_right();
+                break;
+            case LV_DIR_TOP:
+                printf("[View] LV_DIR_TOP!\n");
+                if (!instance->ui.isTopContCollapsed)
+                    instance->appearAnimTop(true);
+
+                break;
+            case LV_DIR_BOTTOM:
+                printf("[View] LV_DIR_BOTTOM!\n");
+                if (instance->ui.isTopContCollapsed)
+                    instance->appearAnimTop(false);
+                break;
+
+            default:
+                break;
+            }
+        }
+    }
+}
+
+void View::image_obj_slide_left(void)
+{
+    lv_obj_t *cont = ui.listCont.cont;
+
+    if (_opts.getPrevTagCb)
+        image_id = _opts.getPrevTagCb(image_id);
+
+    // 新相片进入牌面
+    ImgInfo imginfo;
+    imginfo.w = 320;
+    imginfo.h = 240;
+    _opts.getImageCb(image_id, &imginfo);
+
+    lv_obj_t *img = galleryImageCreate(cont, imginfo, image_pos_x_lut[3], image_pos_y_lut[3]);
+    lv_obj_move_foreground(img);
+    // lv_obj_fade_in(img, MY_MOVE_ANIM_DEFAULT_TIME, 0);
+    lv_anim_fly_up(img, 125, 700, image_fly_delay_lut[3]);
+
+    for (int i = 1; i < 4; ++i)
+    {
+        lv_anim_move(lv_obj_get_child(cont, i), image_pos_x_lut[i - 1], image_pos_y_lut[i - 1], 500, image_fly_delay_lut[i - 1]);
+    }
+    // lv_anim_move(lv_obj_get_child(cont, -1), 500, 0, 700, 0, true); // 运动结束后删除自身
+    lv_obj_t *del_img = lv_obj_get_child(cont, 0);
+    // lv_obj_del(del_img);
+    imageDelete(del_img);
+
+    // 获取子对象个数
+    printf("current child: %d\n", lv_obj_get_child_cnt(cont));
+}
+
+void View::image_obj_slide_right(void)
+{
+    lv_obj_t *cont = ui.listCont.cont;
+
+    if (_opts.getNextTagCb)
+        image_id = _opts.getNextTagCb(image_id);
+
+    // 新相片进入尾巴
+    ImgInfo imginfo;
+    imginfo.w = 320;
+    imginfo.h = 240;
+    _opts.getImageCb(image_id, &imginfo);
+
+    lv_obj_t *img = galleryImageCreate(cont, imginfo, image_pos_x_lut[0], image_pos_y_lut[0]);
+    lv_obj_move_background(img);
+    // lv_obj_fade_in(img, MY_MOVE_ANIM_DEFAULT_TIME, 0);
+    lv_anim_fly_up(img, 125, 700, image_fly_delay_lut[0]);
+
+    for (int i = 1; i < 4; ++i)
+    {
+        lv_anim_move(lv_obj_get_child(cont, i), image_pos_x_lut[i], image_pos_y_lut[i], 500, image_fly_delay_lut[i]);
+    }
+    // lv_anim_move(lv_obj_get_child(cont, -1), 500, 0, 700, 0, true); // 运动结束后删除自身
+    lv_obj_t *del_img = lv_obj_get_child(cont, -1);
+    // lv_obj_del(del_img);
+    imageDelete(del_img);
+    // 获取子对象个数
+    printf("current child: %d\n", lv_obj_get_child_cnt(cont));
 }
