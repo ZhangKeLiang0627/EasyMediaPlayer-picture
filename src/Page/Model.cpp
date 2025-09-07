@@ -39,14 +39,12 @@ Model::Model(std::function<void(void)> exitCb, pthread_mutex_t &mutex)
 Model::~Model()
 {
     _threadExitFlag = true;
-
-    printf("[Model] picture end 1\n");
+    // 等待线程退出，回收资源
+    pthread_join(_pthread, NULL);
 
     lv_timer_del(_timer);
-    printf("[Model] picture end 2\n");
 
     _view.release();
-    printf("[Model] picture end 3\n");
 }
 
 /**
