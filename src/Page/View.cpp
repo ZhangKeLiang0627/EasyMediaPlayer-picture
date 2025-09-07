@@ -75,6 +75,8 @@ void View::release()
     }
     // 移除屏幕手势回调函数
     lv_obj_remove_event_cb(lv_scr_act(), onEvent);
+
+    // TODO: 隐患，这里图片的data没删
 }
 
 void View::appearAnimStart(bool reverse) // 开始开场动画
